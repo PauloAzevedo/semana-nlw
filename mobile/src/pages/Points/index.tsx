@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Constants from 'expo-constants';
 import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Image, Alert } from 'react-native';
 import { Feather as Icon } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import { SvgUri } from 'react-native-svg';
 import * as Location from 'expo-location';
@@ -13,11 +13,25 @@ interface Item {
     title: string;
     image_url: string;
 }
+interface Point {
+    id: number;
+    name: string;
+    image: string;
+    latitude: number;
+    longitude: number;
+}
+interface Params {
+    uf: string;
+    city: string;
+}
 const Points = () => {
+    const route = useRoute();
+    const routeParams = route.params as Params;
 
     const [items, setItems] = useState<Item[]>([]);
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [initialPosition, setInicitalPosition] = useState<[number, number]>([0, 0]);
+    const [points, setPoints] = useState<Point[]>([]);
 
     const navigation = useNavigation();
 
@@ -49,14 +63,14 @@ const Points = () => {
     useEffect(() => {
         api.get('points', {
             params: {
-                city: 'Campo Mourão',
-                uf: 'PR',
-                items: [1,2],
+                city: routeParams.city,
+                uf: routeParams.uf,
+                items: selectedItems,
             }
         }).then(response => {
-            setItems(response.data);
+            setPoints(response.data);
         });
-    }, []);
+    }, [selectedItems]);
 
 
 
@@ -64,8 +78,8 @@ const Points = () => {
         navigation.goBack();
     }
 
-    function handleNavigateToDetail() {
-        navigation.navigate("Detail");
+    function handleNavigateToDetail(id: number) {
+        navigation.navigate("Detail", { point_id: id });
     }
 
     function handleSelectItem(id: number) {
@@ -98,20 +112,24 @@ const Points = () => {
                                 longitudeDelta: 0.014,
                             }}
                         >
-                            <Marker
-                                style={styles.mapMarker}
-                                onPress={handleNavigateToDetail}
-                                coordinate={{
-                                    latitude: -24.01842,
-                                    longitude: -52.35317,
-                                }}
-                            >
-                                <View style={styles.mapMarkerContainer}>
-                                    <Image style={styles.mapMarkerImage} source={{ uri: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&q=60" }}
-                                    />
-                                    <Text style={styles.mapMarkerTitle}>Mercado</Text>
-                                </View>
-                            </Marker>
+                            {points.map(point => (
+                                <Marker
+                                key={String(point.id)}
+                                    style={styles.mapMarker}
+                                    onPress={() => handleNavigateToDetail(point.id)}
+                                    coordinate={{
+                                        latitude: point.latitude,
+                                        longitude: point.longitude,
+                                    }}
+                                >
+                                    <View style={styles.mapMarkerContainer}>
+                                        <Image style={styles.mapMarkerImage} source={{ uri: point.image }}
+                                        />
+                                        <Text style={styles.mapMarkerTitle}>{point.name}</Text>
+                                    </View>
+                                </Marker>
+                            ))}
+
                         </MapView>
                     )}
 
