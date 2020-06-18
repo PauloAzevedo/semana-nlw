@@ -3,7 +3,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft, FiCheckCircle } from 'react-icons/fi';
 import { Map, TileLayer, Marker } from 'react-leaflet';
 import Backdrop from '@material-ui/core/Backdrop';
-import CircularProgress from '@material-ui/core/CircularProgress';
+//import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles } from '@material-ui/core/styles';
 
 import api from '../../services/api';
@@ -12,6 +12,9 @@ import axios from 'axios';
 import './styles.css';
 import logo from '../../assets/logo.svg';
 import { LeafletMouseEvent } from 'leaflet';
+
+import Dropzone from '../../components/Dropzone';
+
 
 
 //arry ou objet precisa informar manual o tipo da variavel
@@ -45,6 +48,7 @@ const CreatePoint = () => {
     const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
     const [selectedCity, setSelectedCity] = useState('0');
     const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
+    const [selectedFile, setSelectedFile] = useState<File>();
 
     const history = useHistory();
 
@@ -62,12 +66,12 @@ const CreatePoint = () => {
     const classes = useStyles();
     const [open, setOpen] = useState(false);
     const handleClose = () => {
-        setOpen(false);        
+        setOpen(false);
         history.push("/");
     };
-    const handleToggle = () => {
-        setOpen(!open);
-    };
+    //const handleToggle = () => {
+     //   setOpen(!open);
+    //};
 
     // para abrir o backdrop
 
@@ -133,7 +137,22 @@ const CreatePoint = () => {
         const city = selectedCity;
         const [latitude, longitude] = selectedPosition;
         const items = selectedItems;
-        const data = {
+
+        const data = new FormData();
+
+        data.append('name', name);
+        data.append('email', email);
+        data.append('whatsapp', whatsapp);
+        data.append('uf', uf);
+        data.append('city', city);
+        data.append('latitude', String(latitude));
+        data.append('longitude', String(longitude));
+        data.append('items', items.join(','));
+        if(selectedFile){
+            data.append('image', selectedFile);
+        }
+          
+        /*const data = {
             name,
             email,
             whatsapp,
@@ -142,7 +161,7 @@ const CreatePoint = () => {
             latitude,
             longitude,
             items,
-        }
+        }*/
 
         const response = await api.post('/points', data);
         if (response.status === 200) {
@@ -177,6 +196,9 @@ const CreatePoint = () => {
             </header>
             <form onSubmit={handleSubmit}>
                 <h1>Cadastro do <br /> ponto de coleta</h1>
+
+                <Dropzone onFileUploaded={setSelectedFile} />
+
                 <fieldset>
                     <legend>
                         <h2>Dados</h2>
@@ -275,9 +297,9 @@ const CreatePoint = () => {
                 </button>
                 <div>
                     <Backdrop className={classes.backdrop} open={open} onClick={handleClose}>
-                        <FiCheckCircle color="#2FB86E" size={30}/>
+                        <FiCheckCircle color="#2FB86E" size={30} />
                         <div>
-                        <label>Cadastrado concluído!</label>
+                            <label>Cadastrado concluído!</label>
                         </div>
                     </Backdrop>
                 </div>
